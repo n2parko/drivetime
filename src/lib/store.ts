@@ -109,7 +109,16 @@ export async function getArtifactsByStatus(userId: string, status: ArtifactStatu
 }
 
 export async function getPendingArtifacts(userId: string): Promise<Artifact[]> {
-  return getArtifactsByStatus(userId, 'ready');
+  // Return artifacts that are pending or ready (not yet played)
+  const { data, error } = await supabase
+    .from('artifacts')
+    .select('*')
+    .eq('user_id', userId)
+    .in('status', ['pending', 'ready'])
+    .order('created_at', { ascending: false });
+
+  if (error || !data) return [];
+  return (data as ArtifactRow[]).map(rowToArtifact);
 }
 
 export async function saveArtifact(artifact: Artifact): Promise<void> {

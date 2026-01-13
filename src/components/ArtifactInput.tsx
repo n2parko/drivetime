@@ -8,7 +8,7 @@ interface ArtifactInputProps {
 }
 
 const TYPES: { type: ArtifactType; label: string; color: string }[] = [
-  { type: "idea", label: "Idea", color: "#eab308" },
+  { type: "idea", label: "Idea", color: "#3b82f6" },
   { type: "question", label: "Question", color: "#8b5cf6" },
   { type: "note", label: "Note", color: "#06b6d4" },
 ];

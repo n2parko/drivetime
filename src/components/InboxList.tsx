@@ -11,7 +11,7 @@ interface InboxListProps {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  idea: "#eab308",
+  idea: "#3b82f6",
   question: "#8b5cf6",
   note: "#06b6d4",
   article: "#10b981",

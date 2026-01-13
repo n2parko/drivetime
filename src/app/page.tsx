@@ -31,29 +31,12 @@ export default function Home() {
     fetchArtifacts();
   };
 
-  const playableCount = artifacts.filter((a) => a.status === "ready" || a.status === "pending").length;
-
   return (
     <div className="min-h-screen pb-safe" style={{ background: 'var(--bg)' }}>
       {/* Header - compact for mobile */}
       <header className="sticky top-0 z-10 border-b pt-safe" style={{ borderColor: 'var(--border)', background: 'var(--card)' }}>
-        <div className="px-4 py-3 flex items-center justify-between">
+        <div className="px-4 py-3">
           <span className="font-semibold text-lg" style={{ color: 'var(--fg)' }}>drivetime</span>
-
-          <a
-            href="/drive"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full font-medium text-sm text-white active:scale-95 transition-transform"
-            style={{ background: playableCount > 0 ? 'var(--accent)' : 'var(--muted)' }}
-          >
-            {playableCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">
-                {playableCount}
-              </span>
-            )}
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </a>
         </div>
       </header>
 
