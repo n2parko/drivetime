@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "DriveTime",
+  "description": "Save articles and pages to your DriveTime queue for listening later",
+  "version": "1.0.0",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    },
+    "default_title": "Save to DriveTime",
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://drivetime-kappa.vercel.app/*"
+  ]
+}
