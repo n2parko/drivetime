@@ -13,14 +13,14 @@
       --fg: #1c1917;
       --muted: #78716c;
       --border: #e7e5e4;
-      --accent: #f97316;
-      --accent-hover: #ea580c;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
       --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
       --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
       --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05);
       --radius: 16px;
       --radius-sm: 12px;
-      --idea: #f59e0b;
+      --idea: #3b82f6;
       --question: #8b5cf6;
       --note: #06b6d4;
       --article: #10b981;
@@ -61,7 +61,7 @@
     .logo {
       width: 40px;
       height: 40px;
-      background: linear-gradient(135deg, var(--accent) 0%, #fb923c 100%);
+      background: linear-gradient(135deg, var(--accent) 0%, #60a5fa 100%);
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -195,7 +195,7 @@
       cursor: pointer;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       margin-top: 16px;
-      box-shadow: var(--shadow), 0 2px 8px rgba(249, 115, 22, 0.25);
+      box-shadow: var(--shadow), 0 2px 8px rgba(59, 130, 246, 0.25);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -204,7 +204,7 @@
 
     .submit-btn:hover:not(:disabled) { 
       transform: translateY(-1px);
-      box-shadow: var(--shadow-md), 0 4px 12px rgba(249, 115, 22, 0.35);
+      box-shadow: var(--shadow-md), 0 4px 12px rgba(59, 130, 246, 0.35);
     }
 
     .submit-btn:active:not(:disabled) { 
@@ -311,7 +311,7 @@
       gap: 4px;
     }
 
-    .type-badge.idea { background: rgba(245, 158, 11, 0.15); color: var(--idea); }
+    .type-badge.idea { background: rgba(59, 130, 246, 0.15); color: var(--idea); }
     .type-badge.question { background: rgba(139, 92, 246, 0.15); color: var(--question); }
     .type-badge.note { background: rgba(6, 182, 212, 0.15); color: var(--note); }
     .type-badge.article { background: rgba(16, 185, 129, 0.15); color: var(--article); }
