@@ -19,6 +19,13 @@ interface MCPResponse {
   error?: { code: number; message: string };
 }
 
+// CORS headers for ChatGPT access
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
 // Widget template URI
 const WIDGET_URI = 'ui://widget/drivetime.html';
 
@@ -124,7 +131,7 @@ const tools = [
   },
 ];
 
-// Get widget HTML content with injected data
+// Generate widget HTML with injected data (no self-fetch needed)
 async function getWidgetHtml(baseUrl: string): Promise<string> {
   // Fetch pending episodes to inject into the widget
   const episodes = await getPendingArtifacts(DEMO_USER_ID);
@@ -136,38 +143,168 @@ async function getWidgetHtml(baseUrl: string): Promise<string> {
     status: a.status,
   })));
 
-  // Fetch the widget HTML from the public folder
-  try {
-    const response = await fetch(`${baseUrl}/widget/index.html`);
-    let html = await response.text();
-    
-    // Inject the API base URL and pre-fetched episodes
-    const injectedScript = `
-    <script>
-      window.__DRIVETIME_CONFIG__ = {
-        apiBase: ${JSON.stringify(baseUrl)},
-        episodes: ${episodesJson}
-      };
-    </script>
-    `;
-    
-    // Insert before the closing </head> tag
-    html = html.replace('</head>', injectedScript + '</head>');
-    
-    return html;
-  } catch {
-    // Fallback: return a minimal widget
-    return `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"></head>
+  // Return the complete widget HTML with data embedded
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DriveTime</title>
+  <script>
+    window.__DRIVETIME_CONFIG__ = {
+      apiBase: ${JSON.stringify(baseUrl)},
+      episodes: ${episodesJson}
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #fafaf9; --card: #ffffff; --fg: #1c1917; --muted: #78716c;
+      --border: #e7e5e4; --accent: #3b82f6; --accent-hover: #2563eb;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06); --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07);
+      --radius: 16px; --radius-sm: 12px;
+      --idea: #3b82f6; --question: #8b5cf6; --note: #06b6d4; --article: #10b981;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #09090b; --card: #18181b; --fg: #fafafa; --muted: #a1a1aa;
+        --border: #27272a; --shadow: 0 1px 3px rgba(0,0,0,0.3);
+      }
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; background: var(--bg); color: var(--fg); padding: 20px; line-height: 1.5; }
+    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .logo { width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent), #60a5fa); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .logo svg { width: 22px; height: 22px; color: white; }
+    .title { font-size: 20px; font-weight: 700; }
+    .tagline { font-size: 12px; color: var(--muted); }
+    .input-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 24px; }
+    .type-selector { display: flex; gap: 8px; margin-bottom: 16px; }
+    .type-btn { padding: 8px 14px; border-radius: 24px; font-size: 13px; font-weight: 600; border: 2px solid transparent; cursor: pointer; background: var(--bg); color: var(--muted); transition: all 0.2s; }
+    .type-btn.active { color: white; }
+    .type-btn.idea.active { background: var(--idea); }
+    .type-btn.question.active { background: var(--question); }
+    .type-btn.note.active { background: var(--note); }
+    textarea { width: 100%; min-height: 80px; background: transparent; border: none; outline: none; resize: none; font-size: 15px; color: var(--fg); font-family: inherit; }
+    textarea::placeholder { color: var(--muted); }
+    .submit-btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+    .submit-btn:disabled { opacity: 0.6; }
+    .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 12px; }
+    .episode-list { display: flex; flex-direction: column; gap: 10px; }
+    .episode { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; cursor: pointer; position: relative; border-left: 4px solid var(--accent); }
+    .episode.idea { border-left-color: var(--idea); }
+    .episode.question { border-left-color: var(--question); }
+    .episode.note { border-left-color: var(--note); }
+    .episode.article { border-left-color: var(--article); }
+    .episode-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .episode-type { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); }
+    .empty-state { text-align: center; padding: 40px 20px; background: var(--card); border: 2px dashed var(--border); border-radius: var(--radius); }
+    .empty-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .empty-text { font-size: 13px; color: var(--muted); }
+    .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 20px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
 <body>
-<div id="root">Loading DriveTime...</div>
-<script>
-  // Use window.openai to access tool data
-  const data = window.openai?.toolOutput || {};
-  document.getElementById('root').innerHTML = '<h2>DriveTime</h2><p>' + (data.message || 'Ready') + '</p>';
-</script>
-</body></html>`;
-  }
+  <div class="header">
+    <div class="logo"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg></div>
+    <div><span class="title">DriveTime</span><br><span class="tagline">Audio for your commute</span></div>
+  </div>
+  <div class="input-card">
+    <div class="type-selector">
+      <button class="type-btn idea active" data-type="idea">💡 Idea</button>
+      <button class="type-btn question" data-type="question">❓ Question</button>
+      <button class="type-btn note" data-type="note">📝 Note</button>
+    </div>
+    <textarea id="content" placeholder="What's on your mind?"></textarea>
+    <button class="submit-btn" id="submit">Add to Queue</button>
+  </div>
+  <div class="section-title">Today's Queue</div>
+  <div class="episode-list" id="episodes"><div class="spinner"></div></div>
+  <script>
+    const config = window.__DRIVETIME_CONFIG__ || {};
+    const API_BASE = config.apiBase || window.openai?.toolResponseMetadata?.['openai/widgetDomain'] || '';
+    let episodes = config.episodes || [];
+    let selectedType = 'idea';
+
+    console.log('[DriveTime] Init - API_BASE:', API_BASE, 'episodes:', episodes.length, 'openai:', !!window.openai);
+
+    const contentEl = document.getElementById('content');
+    const submitBtn = document.getElementById('submit');
+    const episodesEl = document.getElementById('episodes');
+    const typeButtons = document.querySelectorAll('.type-btn');
+
+    typeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        typeButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedType = btn.dataset.type;
+      });
+    });
+
+    submitBtn.addEventListener('click', async () => {
+      const content = contentEl.value.trim();
+      if (!content) return;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Adding...';
+      const isUrl = content.startsWith('http://') || content.startsWith('https://');
+      const typeToAdd = isUrl ? 'article' : selectedType;
+      try {
+        if (window.openai?.callTool) {
+          await window.openai.callTool('add_to_queue', { type: typeToAdd, content });
+          contentEl.value = '';
+          window.openai.sendFollowUpMessage?.('Added to your queue!');
+        } else if (API_BASE) {
+          const res = await fetch(API_BASE + '/api/artifacts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: typeToAdd, content: isUrl ? '' : content, sourceUrl: isUrl ? content : undefined })
+          });
+          if (res.ok) { contentEl.value = ''; loadEpisodes(); }
+        }
+      } catch (err) { console.error('[DriveTime] Add error:', err); }
+      finally { submitBtn.disabled = false; submitBtn.textContent = 'Add to Queue'; }
+    });
+
+    async function loadEpisodes() {
+      if (episodes.length > 0) { renderEpisodes(); return; }
+      if (!API_BASE) { renderEpisodes(); return; }
+      try {
+        const res = await fetch(API_BASE + '/api/artifacts');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        episodes = (data.artifacts || []).filter(a => a.status === 'ready' || a.status === 'pending');
+        renderEpisodes();
+      } catch (err) {
+        console.error('[DriveTime] Load error:', err);
+        episodesEl.innerHTML = '<div class="empty-state"><div class="empty-title">Failed to load</div><div class="empty-text">' + (err.message || 'Connection error') + '</div></div>';
+      }
+    }
+
+    function renderEpisodes() {
+      if (episodes.length === 0) {
+        episodesEl.innerHTML = '<div class="empty-state"><div class="empty-title">Queue empty</div><div class="empty-text">Add an idea, question, or note above</div></div>';
+        return;
+      }
+      episodesEl.innerHTML = episodes.map(ep => 
+        '<div class="episode ' + ep.type + '" data-id="' + ep.id + '">' +
+        '<div class="episode-type">' + ep.type + '</div>' +
+        '<div class="episode-title">' + escapeHtml(ep.title) + '</div></div>'
+      ).join('');
+      document.querySelectorAll('.episode').forEach(el => {
+        el.addEventListener('click', () => {
+          if (window.openai?.callTool) {
+            window.openai.callTool('get_episode_content', { episode_id: el.dataset.id, mode: 'summary' });
+          }
+        });
+      });
+    }
+
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    loadEpisodes();
+  </script>
+</body>
+</html>`;
 }
 
 async function handleToolCall(
@@ -377,6 +514,11 @@ async function handleToolCall(
   }
 }
 
+// Handle CORS preflight
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: MCPRequest = await request.json();
@@ -456,14 +598,14 @@ export async function POST(request: NextRequest) {
         response.error = { code: -32601, message: `Method not found: ${body.method}` };
     }
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, { headers: corsHeaders });
   } catch (error) {
     console.error('MCP error:', error);
     return NextResponse.json({
       jsonrpc: '2.0',
       id: null,
       error: { code: -32603, message: 'Internal error' },
-    });
+    }, { headers: corsHeaders });
   }
 }
 
@@ -486,6 +628,7 @@ export async function GET() {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
+      ...corsHeaders,
     },
   });
 }
