@@ -124,12 +124,37 @@ const tools = [
   },
 ];
 
-// Get widget HTML content
+// Get widget HTML content with injected data
 async function getWidgetHtml(baseUrl: string): Promise<string> {
+  // Fetch pending episodes to inject into the widget
+  const episodes = await getPendingArtifacts(DEMO_USER_ID);
+  const episodesJson = JSON.stringify(episodes.map(a => ({
+    id: a.id,
+    type: a.type,
+    title: a.title,
+    summary: a.summary,
+    status: a.status,
+  })));
+
   // Fetch the widget HTML from the public folder
   try {
     const response = await fetch(`${baseUrl}/widget/index.html`);
-    return await response.text();
+    let html = await response.text();
+    
+    // Inject the API base URL and pre-fetched episodes
+    const injectedScript = `
+    <script>
+      window.__DRIVETIME_CONFIG__ = {
+        apiBase: ${JSON.stringify(baseUrl)},
+        episodes: ${episodesJson}
+      };
+    </script>
+    `;
+    
+    // Insert before the closing </head> tag
+    html = html.replace('</head>', injectedScript + '</head>');
+    
+    return html;
   } catch {
     // Fallback: return a minimal widget
     return `<!DOCTYPE html>

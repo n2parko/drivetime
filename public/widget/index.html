@@ -499,9 +499,15 @@
   </div>
 
   <script>
-    const API_BASE = window.location.origin;
-    let episodes = [];
+    // Get config - either injected by server or from current origin
+    const config = window.__DRIVETIME_CONFIG__ || {};
+    let API_BASE = config.apiBase || window.openai?.widgetDomain || window.location.origin;
+    let episodes = config.episodes || [];
     let selectedType = 'idea';
+
+    console.log('[DriveTime] Config:', config);
+    console.log('[DriveTime] API_BASE:', API_BASE);
+    console.log('[DriveTime] Pre-loaded episodes:', episodes.length);
 
     const placeholders = {
       idea: "💡 What's on your mind?",
@@ -541,29 +547,50 @@
         Adding...
       `;
 
+      const isUrl = content.startsWith('http://') || content.startsWith('https://');
+      const typeToAdd = isUrl ? 'article' : selectedType;
+
       try {
-        const isUrl = content.startsWith('http://') || content.startsWith('https://');
-
-        const res = await fetch(`${API_BASE}/api/artifacts`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: isUrl ? 'article' : selectedType,
-            content: isUrl ? '' : content,
-            sourceUrl: isUrl ? content : undefined
-          })
-        });
-
-        if (res.ok) {
+        // In ChatGPT context, use the MCP tool
+        if (window.openai?.callTool) {
+          console.log('[DriveTime] Using callTool to add content');
+          await window.openai.callTool('add_to_queue', {
+            type: typeToAdd,
+            content: content
+          });
           contentEl.value = '';
-          loadEpisodes();
+          // Notify user
+          if (window.openai.sendFollowUpMessage) {
+            window.openai.sendFollowUpMessage(`Added "${content.slice(0, 50)}${content.length > 50 ? '...' : ''}" to your queue`);
+          }
+        } else {
+          // Direct API call (when accessed outside ChatGPT)
+          const res = await fetch(`${API_BASE}/api/artifacts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: typeToAdd,
+              content: isUrl ? '' : content,
+              sourceUrl: isUrl ? content : undefined
+            })
+          });
 
-          if (window.openai?.sendFollowUpMessage) {
-            window.openai.sendFollowUpMessage(`Added new ${selectedType} to queue`);
+          if (res.ok) {
+            contentEl.value = '';
+            // Add the new item to the local episodes list
+            const newArtifact = await res.json();
+            episodes.unshift({
+              id: newArtifact.id,
+              type: newArtifact.type,
+              title: newArtifact.title,
+              summary: newArtifact.summary,
+              status: newArtifact.status,
+            });
+            renderEpisodes();
           }
         }
       } catch (err) {
-        console.error('Failed to add:', err);
+        console.error('[DriveTime] Failed to add:', err);
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `
@@ -575,22 +602,35 @@
       }
     });
 
-    // Load episodes
+    // Load episodes - use pre-loaded data or fallback to API
     async function loadEpisodes() {
+      // If we have pre-loaded episodes from server injection, use them
+      if (episodes.length > 0) {
+        console.log('[DriveTime] Using pre-loaded episodes:', episodes.length);
+        renderEpisodes();
+        return;
+      }
+
+      // Fallback to API call (works when accessed directly)
+      console.log('[DriveTime] Loading episodes from API:', API_BASE);
+
       try {
         const res = await fetch(`${API_BASE}/api/artifacts`);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
         const data = await res.json();
         episodes = (data.artifacts || []).filter(a => a.status === 'ready' || a.status === 'pending');
         renderEpisodes();
       } catch (err) {
-        console.error('Failed to load:', err);
+        console.error('[DriveTime] Failed to load:', err, 'API_BASE:', API_BASE);
         episodesEl.innerHTML = `
           <div class="empty-state">
             <svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <div class="empty-title">Couldn't load episodes</div>
-            <div class="empty-text">Check your connection and try again</div>
+            <div class="empty-title">Failed to load episodes</div>
+            <div class="empty-text">${err.message || 'Check your connection'}</div>
           </div>
         `;
       }
@@ -664,8 +704,15 @@
       return div.innerHTML;
     }
 
-    // Init
-    loadEpisodes();
+    // Init - if we have pre-loaded config, render immediately
+    console.log('[DriveTime] Initializing...');
+    if (config.episodes && config.episodes.length > 0) {
+      // We have pre-loaded data, render immediately
+      loadEpisodes();
+    } else {
+      // No pre-loaded data, try API call
+      loadEpisodes();
+    }
 
     // Handle Enter key
     contentEl.addEventListener('keydown', (e) => {

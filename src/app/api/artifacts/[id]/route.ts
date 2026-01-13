@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getArtifact, updateArtifactStatus, deleteArtifact } from '@/lib/store';
 
+// CORS headers for ChatGPT widget access
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -12,16 +23,16 @@ export async function GET(
     if (!artifact) {
       return NextResponse.json(
         { error: 'Artifact not found' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       );
     }
 
-    return NextResponse.json(artifact);
+    return NextResponse.json(artifact, { headers: corsHeaders });
   } catch (error) {
     console.error('Error fetching artifact:', error);
     return NextResponse.json(
       { error: 'Failed to fetch artifact' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
@@ -40,16 +51,16 @@ export async function PATCH(
     if (!updated) {
       return NextResponse.json(
         { error: 'Artifact not found' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       );
     }
 
-    return NextResponse.json(updated);
+    return NextResponse.json(updated, { headers: corsHeaders });
   } catch (error) {
     console.error('Error updating artifact:', error);
     return NextResponse.json(
       { error: 'Failed to update artifact' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
@@ -65,16 +76,16 @@ export async function DELETE(
     if (!deleted) {
       return NextResponse.json(
         { error: 'Artifact not found' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: corsHeaders });
   } catch (error) {
     console.error('Error deleting artifact:', error);
     return NextResponse.json(
       { error: 'Failed to delete artifact' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
