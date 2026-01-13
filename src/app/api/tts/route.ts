@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     const audioBuffer = await generateTTS(textToSpeak);
 
     // Return audio as MP3
-    return new NextResponse(audioBuffer, {
+    return new NextResponse(new Uint8Array(audioBuffer), {
       headers: {
         'Content-Type': 'audio/mpeg',
         'Content-Length': audioBuffer.length.toString(),

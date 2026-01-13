@@ -21,20 +21,24 @@ export function ArtifactInput({ onArtifactCreated }: ArtifactInputProps) {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (isSubmitting || !content.trim()) return;
+    
+    // Get value from DOM as fallback (for browser automation compatibility)
+    const inputValue = inputRef.current?.value || content;
+    
+    if (isSubmitting || !inputValue.trim()) return;
 
     setIsSubmitting(true);
 
     try {
-      const isUrl = content.startsWith("http://") || content.startsWith("https://");
+      const isUrl = inputValue.startsWith("http://") || inputValue.startsWith("https://");
 
       const response = await fetch("/api/artifacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: isUrl ? "article" : artifactType,
-          content: content.trim(),
-          sourceUrl: isUrl ? content.trim() : undefined,
+          content: inputValue.trim(),
+          sourceUrl: isUrl ? inputValue.trim() : undefined,
         }),
       });
 
@@ -42,6 +46,7 @@ export function ArtifactInput({ onArtifactCreated }: ArtifactInputProps) {
         const artifact = await response.json();
         onArtifactCreated(artifact);
         setContent("");
+        if (inputRef.current) inputRef.current.value = "";
       } else {
         console.error("Failed to create artifact");
       }
@@ -98,8 +103,8 @@ export function ArtifactInput({ onArtifactCreated }: ArtifactInputProps) {
         />
         <button
           type="submit"
-          disabled={isSubmitting || !content.trim()}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-all active:scale-90 disabled:opacity-30"
+          disabled={isSubmitting}
+          className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-all active:scale-90 disabled:opacity-50"
           style={{ background: 'var(--accent)' }}
         >
           {isSubmitting ? (
