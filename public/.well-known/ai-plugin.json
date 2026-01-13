@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "DriveTime",
+  "name_for_model": "drivetime",
+  "description_for_human": "Capture ideas, articles, and questions throughout the day. Listen to them as audio episodes on your commute.",
+  "description_for_model": "DriveTime helps users capture ideas, articles, questions, and notes throughout the day. When they're ready (like on their commute), it can read these back as audio episodes. Use show_drivetime to open the widget, get_todays_episodes to see what's queued, get_episode_content to read an episode aloud, mark_episode_complete when done, and add_to_queue to add new content.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "mcp",
+    "url": "/api/mcp"
+  },
+  "logo_url": "/logo.png",
+  "contact_email": "support@drivetime.app",
+  "legal_info_url": "https://drivetime.app/legal"
+}

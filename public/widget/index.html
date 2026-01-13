@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DriveTime</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fafaf9;
+      --card: #ffffff;
+      --fg: #1c1917;
+      --muted: #78716c;
+      --border: #e7e5e4;
+      --accent: #f97316;
+      --accent-hover: #ea580c;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05);
+      --radius: 16px;
+      --radius-sm: 12px;
+      --idea: #f59e0b;
+      --question: #8b5cf6;
+      --note: #06b6d4;
+      --article: #10b981;
+      --screenshot: #ec4899;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #09090b;
+        --card: #18181b;
+        --fg: #fafafa;
+        --muted: #a1a1aa;
+        --border: #27272a;
+        --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.3);
+        --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.5), 0 4px 6px -4px rgba(0,0,0,0.4);
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      padding: 20px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      line-height: 1.5;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent) 0%, #fb923c 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-md);
+    }
+
+    .logo svg { width: 22px; height: 22px; color: white; }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--fg) 0%, var(--muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tagline {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    /* Input Card */
+    .input-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .input-card:focus-within {
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent);
+    }
+
+    /* Type Selector */
+    .type-selector {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .type-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      background: var(--bg);
+      color: var(--muted);
+    }
+
+    .type-btn:hover:not(.active) {
+      background: var(--border);
+      color: var(--fg);
+    }
+
+    .type-btn.active {
+      color: white;
+      box-shadow: var(--shadow);
+    }
+
+    .type-btn.idea.active { 
+      background: var(--idea); 
+      border-color: var(--idea);
+    }
+    .type-btn.question.active { 
+      background: var(--question); 
+      border-color: var(--question);
+    }
+    .type-btn.note.active { 
+      background: var(--note); 
+      border-color: var(--note);
+    }
+
+    .type-icon {
+      width: 14px;
+      height: 14px;
+      opacity: 0.9;
+    }
+
+    /* Textarea */
+    .input-wrapper {
+      position: relative;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      font-size: 15px;
+      color: var(--fg);
+      font-family: inherit;
+      line-height: 1.6;
+    }
+
+    textarea::placeholder { 
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    /* Submit Button */
+    .submit-btn {
+      width: 100%;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-top: 16px;
+      box-shadow: var(--shadow), 0 2px 8px rgba(249, 115, 22, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .submit-btn:hover:not(:disabled) { 
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md), 0 4px 12px rgba(249, 115, 22, 0.35);
+    }
+
+    .submit-btn:active:not(:disabled) { 
+      transform: translateY(0);
+    }
+
+    .submit-btn:disabled { 
+      opacity: 0.6; 
+      cursor: not-allowed; 
+      transform: none; 
+    }
+
+    .submit-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Queue Section */
+    .queue-section {
+      margin-top: 8px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 10px;
+      background: var(--border);
+      color: var(--muted);
+    }
+
+    /* Episode List */
+    .episode-list { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 10px; 
+    }
+
+    .episode {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .episode::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      border-radius: 4px 0 0 4px;
+    }
+
+    .episode.idea::before { background: var(--idea); }
+    .episode.question::before { background: var(--question); }
+    .episode.note::before { background: var(--note); }
+    .episode.article::before { background: var(--article); }
+    .episode.screenshot::before { background: var(--screenshot); }
+
+    .episode:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: transparent;
+    }
+
+    .episode-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .type-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .type-badge.idea { background: rgba(245, 158, 11, 0.15); color: var(--idea); }
+    .type-badge.question { background: rgba(139, 92, 246, 0.15); color: var(--question); }
+    .type-badge.note { background: rgba(6, 182, 212, 0.15); color: var(--note); }
+    .type-badge.article { background: rgba(16, 185, 129, 0.15); color: var(--article); }
+    .type-badge.screenshot { background: rgba(236, 72, 153, 0.15); color: var(--screenshot); }
+
+    .episode-title {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 4px;
+      color: var(--fg);
+    }
+
+    .episode-summary {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      background: var(--card);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+    }
+
+    .empty-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 16px;
+      color: var(--muted);
+      opacity: 0.5;
+    }
+
+    .empty-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: 4px;
+    }
+
+    .empty-text {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* Play Button */
+    .play-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+      box-shadow: var(--shadow), 0 2px 8px rgba(16, 185, 129, 0.25);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .play-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md), 0 4px 12px rgba(16, 185, 129, 0.35);
+    }
+
+    .play-btn svg { width: 20px; height: 20px; }
+
+    /* Loading */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      gap: 12px;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loading-text {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Success Animation */
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .episode {
+      animation: slideIn 0.3s ease-out;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+        </svg>
+      </div>
+      <div class="brand">
+        <span class="title">DriveTime</span>
+        <span class="tagline">Audio for your commute</span>
+      </div>
+    </div>
+
+    <!-- Input Card -->
+    <div class="input-card">
+      <div class="type-selector">
+        <button class="type-btn idea active" data-type="idea">
+          <svg class="type-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+          Idea
+        </button>
+        <button class="type-btn question" data-type="question">
+          <svg class="type-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Question
+        </button>
+        <button class="type-btn note" data-type="note">
+          <svg class="type-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          Note
+        </button>
+      </div>
+      
+      <div class="input-wrapper">
+        <textarea id="content" placeholder="What's on your mind?"></textarea>
+      </div>
+      
+      <button class="submit-btn" id="submit">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        Add to Queue
+      </button>
+    </div>
+
+    <!-- Queue Section -->
+    <div class="queue-section">
+      <div class="section-header">
+        <span class="section-title">Today's Queue</span>
+        <span class="badge" id="count">0 items</span>
+      </div>
+      <div class="episode-list" id="episodes">
+        <div class="loading">
+          <div class="spinner"></div>
+          <span class="loading-text">Loading episodes...</span>
+        </div>
+      </div>
+
+      <button class="play-btn" id="playAll" style="display: none;">
+        <svg fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        Start Listening
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let episodes = [];
+    let selectedType = 'idea';
+
+    const placeholders = {
+      idea: "💡 What's on your mind?",
+      question: "❓ What do you want to explore?",
+      note: "📝 Capture something..."
+    };
+
+    const contentEl = document.getElementById('content');
+    const submitBtn = document.getElementById('submit');
+    const episodesEl = document.getElementById('episodes');
+    const playAllBtn = document.getElementById('playAll');
+    const countBadge = document.getElementById('count');
+    const typeButtons = document.querySelectorAll('.type-btn');
+
+    // Type selection
+    typeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        typeButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedType = btn.dataset.type;
+        contentEl.placeholder = placeholders[selectedType];
+        contentEl.focus();
+      });
+    });
+
+    // Submit
+    submitBtn.addEventListener('click', async () => {
+      const content = contentEl.value.trim();
+      if (!content) {
+        contentEl.focus();
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <div class="spinner" style="width: 18px; height: 18px; border-width: 2px;"></div>
+        Adding...
+      `;
+
+      try {
+        const isUrl = content.startsWith('http://') || content.startsWith('https://');
+
+        const res = await fetch(`${API_BASE}/api/artifacts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: isUrl ? 'article' : selectedType,
+            content: isUrl ? '' : content,
+            sourceUrl: isUrl ? content : undefined
+          })
+        });
+
+        if (res.ok) {
+          contentEl.value = '';
+          loadEpisodes();
+
+          if (window.openai?.sendFollowUpMessage) {
+            window.openai.sendFollowUpMessage(`Added new ${selectedType} to queue`);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to add:', err);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Add to Queue
+        `;
+      }
+    });
+
+    // Load episodes
+    async function loadEpisodes() {
+      try {
+        const res = await fetch(`${API_BASE}/api/artifacts`);
+        const data = await res.json();
+        episodes = (data.artifacts || []).filter(a => a.status === 'ready' || a.status === 'pending');
+        renderEpisodes();
+      } catch (err) {
+        console.error('Failed to load:', err);
+        episodesEl.innerHTML = `
+          <div class="empty-state">
+            <svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div class="empty-title">Couldn't load episodes</div>
+            <div class="empty-text">Check your connection and try again</div>
+          </div>
+        `;
+      }
+    }
+
+    // Render episodes
+    function renderEpisodes() {
+      countBadge.textContent = `${episodes.length} item${episodes.length !== 1 ? 's' : ''}`;
+      
+      if (episodes.length === 0) {
+        episodesEl.innerHTML = `
+          <div class="empty-state">
+            <svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+            <div class="empty-title">Your queue is empty</div>
+            <div class="empty-text">Add an idea, question, or note above</div>
+          </div>
+        `;
+        playAllBtn.style.display = 'none';
+        return;
+      }
+
+      const typeIcons = {
+        idea: '<path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />',
+        question: '<path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />',
+        note: '<path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />',
+        article: '<path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />',
+        screenshot: '<path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />'
+      };
+
+      episodesEl.innerHTML = episodes.map((ep, index) => `
+        <div class="episode ${ep.type}" data-id="${ep.id}" style="animation-delay: ${index * 0.05}s">
+          <div class="episode-header">
+            <span class="type-badge ${ep.type}">
+              <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                ${typeIcons[ep.type] || typeIcons.note}
+              </svg>
+              ${ep.type}
+            </span>
+          </div>
+          <div class="episode-title">${escapeHtml(ep.title)}</div>
+          ${ep.summary ? `<div class="episode-summary">${escapeHtml(ep.summary)}</div>` : ''}
+        </div>
+      `).join('');
+
+      playAllBtn.style.display = 'flex';
+
+      document.querySelectorAll('.episode').forEach(el => {
+        el.addEventListener('click', () => {
+          const id = el.dataset.id;
+          const ep = episodes.find(e => e.id === id);
+          if (ep && window.openai?.callTool) {
+            window.openai.callTool('get_episode_content', { episode_id: id, mode: 'summary' });
+          }
+        });
+      });
+    }
+
+    playAllBtn.addEventListener('click', () => {
+      if (window.openai?.callTool) {
+        window.openai.callTool('get_todays_episodes', {});
+      } else if (window.openai?.sendFollowUpMessage) {
+        window.openai.sendFollowUpMessage("Let's start my drivetime episodes");
+      }
+    });
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Init
+    loadEpisodes();
+
+    // Handle Enter key
+    contentEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        submitBtn.click();
+      }
+    });
+
+    // Theme sync
+    if (window.openai?.theme) {
+      document.documentElement.style.setProperty('--bg', window.openai.theme === 'dark' ? '#09090b' : '#fafaf9');
+    }
+  </script>
+</body>
+</html>
